@@ -4,62 +4,50 @@ using NUnit.Framework;
 namespace MigrationUtilitiesTests
 {
     [TestFixture]
-    public class DbConnectionWrapperFixture
+    public abstract class RepositoryTestFixtureBase
     {
-        private const string ConnectionString = "Server=.;Database=AdventureWorks2017;Trusted_Connection=True;";
-        private static DbConnectionWrapper _wrapper;
-        private static IDbQueryProvider _queryProvider;
-        private static DbObjectRepository _repository;
-
+        protected abstract IDbObjectRepository InitializeRepository();
+        private IDbObjectRepository Repository { get; set; }
+        
         [OneTimeSetUp]
         public void Initialize()
         {
-            _wrapper = new SqlDbConnectionWrapper(ConnectionString);
-            _queryProvider = new SqlQueryProvider();
-            _repository = new DbObjectRepository(_wrapper, _queryProvider);
+            Repository = InitializeRepository();
         }
-
+        
         [Test]
         public void TestObjects()
         {
-            var data = _repository.GetAllObjects();
+            var data = Repository.GetAllObjects();
         }
 
         [Test]
         public void TestColumns()
         {
-            var data = _repository.GetAllColumns();
+            var data = Repository.GetAllColumns();
+        }
+    }
+    
+    [TestFixture]
+    public class DbConnectionWrapperFixture : RepositoryTestFixtureBase
+    {
+        private static string ConnectionString => "Server=.;Database=AdventureWorks2017;Trusted_Connection=True;";
+
+        protected override IDbObjectRepository InitializeRepository()
+        {
+            return new SqlDbObjectRepository(ConnectionString);
         }
     }
 
     [TestFixture]
-    public class OracleDbConnectionWrapperFixture
+    public class OracleDbConnectionWrapperFixture : RepositoryTestFixtureBase
     {
-        private const string ConnectionString =
+        private static string ConnectionString =>
             "Data Source=(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=localhost)(PORT=1521))(CONNECT_DATA=(SERVICE_NAME=TEST)));User Id=hr;Password=password;";
-        private static DbConnectionWrapper _wrapper;
-        private static IDbQueryProvider _queryProvider;
-        private static DbObjectRepository _repository;
 
-        [OneTimeSetUp]
-        public void Initialize()
+        protected override IDbObjectRepository InitializeRepository()
         {
-            _wrapper = new OracleDbConnectionWrapper(ConnectionString);
-            _queryProvider = new OracleQueryProvider();
-            _repository = new DbObjectRepository(_wrapper, _queryProvider);
+            return new OracleDbObjectRepository(ConnectionString);
         }
-
-        [Test]
-        public void TestObjects()
-        {
-            var data = _repository.GetAllObjects();
-        }
-
-        [Test]
-        public void TestColumns()
-        {
-            var data = _repository.GetAllColumns();
-        }
-
     }
 }

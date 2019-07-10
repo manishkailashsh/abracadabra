@@ -4,15 +4,26 @@ using Dapper;
 
 namespace MigrationUtilities
 {
-    public class DbObjectRepository
+    public interface IDbObjectRepository
     {
-        private readonly DbConnectionWrapper _wrapper;
-        private readonly IDbQueryProvider _queryProvider;
+        List<DbObject> GetAllObjects();
+
+        List<DbColumnObject> GetAllColumns();
+
+        void RefreshAll();
+    }
+    
+    public class DbObjectRepository<TWrapper, TQueryProvider> : IDbObjectRepository
+        where TWrapper: DbConnectionWrapper
+        where TQueryProvider: IDbQueryProvider
+    {
+        private readonly TWrapper _wrapper;
+        private readonly TQueryProvider _queryProvider;
 
         private List<DbObject> _dbObjectCache;
         private List<DbColumnObject> _dbColumnCache;
 
-        public DbObjectRepository(DbConnectionWrapper wrapper, IDbQueryProvider queryProvider)
+        protected DbObjectRepository(TWrapper wrapper, TQueryProvider queryProvider)
         {
             _wrapper = wrapper;
             _queryProvider = queryProvider;
@@ -37,5 +48,21 @@ namespace MigrationUtilities
             _dbObjectCache = null;
             _dbColumnCache = null;
         }
+    }
+
+    public class OracleDbObjectRepository : DbObjectRepository<OracleDbConnectionWrapper, OracleQueryProvider>
+    {
+        public OracleDbObjectRepository(string connectionString) 
+            : base(new OracleDbConnectionWrapper(connectionString), new OracleQueryProvider())
+        {
+        }
+    }
+
+    public class SqlDbObjectRepository : DbObjectRepository<SqlDbConnectionWrapper, SqlQueryProvider>
+    {
+    public SqlDbObjectRepository(string connectionString)
+        : base(new SqlDbConnectionWrapper(connectionString), new SqlQueryProvider())
+    {
+    }
     }
 }
