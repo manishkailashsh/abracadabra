@@ -1,4 +1,4 @@
-﻿namespace MigrationUtilities
+﻿namespace MigrationUtilities.Queries
 {
     public class SqlQueryProvider : IDbQueryProvider
     {
